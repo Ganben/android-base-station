@@ -1,101 +1,89 @@
 package net.chaoc.blescanner;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.util.SparseArrayCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import net.chaoc.blescanner.models.BleInfo;
+import net.chaoc.blescanner.utils.CacheUtil;
+import net.chaoc.blescanner.utils.ConfigUtil;
+
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
 
-import java.io.ByteArrayInputStream;
+import java.util.Date;
+import java.util.HashMap;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.yunba.android.manager.YunBaManager;
 
-import static android.content.ContentValues.TAG;
+public class MainActivity extends AppCompatActivity {
+    @BindView(R.id.StartScanButton)
+    Button startScanningButton;
+    @BindView(R.id.StopScanButton)
+    Button stopScanningButton;
+    @BindView(R.id.PeripheralTextView)
+    TextView peripheralTextView;
 
-public class MainActivity extends AppCompatActivity implements android.view.View.OnClickListener {
+    public static final String TAG = "MainActivity";
+    private final static int REQUEST_ENABLE_BT = 1;
+    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+    private static final int PUBLISH_YUNBA_INTERVAL = 5000;          //云巴publish间隔，单位毫秒
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
     BluetoothLeScanner btScanner;
-    Button startScanningButton;
-    Button stopScanningButton;
-    TextView peripheralTextView;
-    private final static int REQUEST_ENABLE_BT = 1;
-    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
+    private HashMap<String,BleInfo> bleCache = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
+        initView();
         init();
-
-        peripheralTextView = (TextView) findViewById(R.id.PeripheralTextView);
-        peripheralTextView.setMovementMethod(new ScrollingMovementMethod());
-
-        startScanningButton = (Button) findViewById(R.id.StartScanButton);
-        startScanningButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startScanning();
-            }
-        });
-        stopScanningButton = (Button) findViewById(R.id.StopScanButton);
-        stopScanningButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                stopScanning();
-            }
-        });
-        stopScanningButton.setVisibility(View.INVISIBLE);
-
-        YunBaManager.start(getApplicationContext());
-        YunBaManager.subscribe(getApplicationContext(), new String[]{"t1"}, new IMqttActionListener() {
-
-            @Override
-            public void onSuccess(IMqttToken arg0) {
-                Log.d("main", "Subscribe topic succeed");
-
-            }
-
-            @Override
-            public void onFailure(IMqttToken arg0, Throwable arg1) {
-                Log.d("main", "Subscribe topic failed" );
-            }
-        });
-
-        registerMessageReceiver();
-
+        //registerMessageReceiver();
     }
 
-    public void init(){
-        btManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        checkConfig();
+    }
+
+    private void initView() {
+        peripheralTextView.setMovementMethod(new ScrollingMovementMethod());
+        stopScanningButton.setVisibility(View.INVISIBLE);
+    }
+
+    private void init() {
+        btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         btScanner = btAdapter.getBluetoothLeScanner();
 
         if (btAdapter != null && !btAdapter.isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent,REQUEST_ENABLE_BT);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         }
-
 
         // Make sure we have access coarse location enabled, if not, prompt the user to enable it
 //        if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -111,9 +99,33 @@ public class MainActivity extends AppCompatActivity implements android.view.View
 //            });
 //            builder.show();
 //        }
+
+        YunBaManager.start(this);
+        /*YunBaManager.subscribe(this, new String[]{"t1"}, new IMqttActionListener() {
+
+            @Override
+            public void onSuccess(IMqttToken arg0) {
+                Log.d("main", "Subscribe topic succeed");
+            }
+
+            @Override
+            public void onFailure(IMqttToken arg0, Throwable arg1) {
+                Log.d("main", "Subscribe topic failed");
+            }
+        });*/
     }
 
-    public void startScanning() {
+    // 检查云巴 alias & topic是否已经配置
+    private void checkConfig() {
+        if (TextUtils.isEmpty(CacheUtil.getInstance().getYunbaAlias())
+            || TextUtils.isEmpty(CacheUtil.getInstance().getYunbaTopic())) {
+            //TODO: need to config alias here
+            Log.e("Alias", "Alias or Topic is not configed");
+        }
+    }
+
+    @OnClick(R.id.StartScanButton)
+    public void startScanning(View view) {
         System.out.println("start scanning");
         peripheralTextView.setText("");
         startScanningButton.setVisibility(View.INVISIBLE);
@@ -126,7 +138,8 @@ public class MainActivity extends AppCompatActivity implements android.view.View
         });
     }
 
-    public void stopScanning() {
+    @OnClick(R.id.StopScanButton)
+    public void stopScanning(View view) {
         System.out.println("stopping scanning");
         peripheralTextView.append("Stopped Scanning");
         startScanningButton.setVisibility(View.VISIBLE);
@@ -140,21 +153,39 @@ public class MainActivity extends AppCompatActivity implements android.view.View
     }
 
 
-        // Device scan callback.
-        private ScanCallback leScanCallback = new ScanCallback() {
-            @Override
-            public void onScanResult(int callbackType, ScanResult result) {
-                peripheralTextView.append("Name: " + result.getDevice().getName() + " rssi: " + result.getRssi() + " : " + result.getScanRecord().getManufacturerSpecificData().keyAt(0) + "\n" + toHexString(result.getScanRecord().getManufacturerSpecificData().valueAt(0))+ "\n");
+    // Device scan callback.
+    private ScanCallback leScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            String payload = toHexString(result.getScanRecord().getManufacturerSpecificData().valueAt(0));
+            String name = result.getDevice().getName();
+            int rssi = result.getRssi();
 
-                // auto scroll for text view
-                final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
-                // if there is no need to scroll, scrollAmount will be <=0
-                if (scrollAmount > 0)
-                    peripheralTextView.scrollTo(0, scrollAmount);
+            peripheralTextView.append("Name: " + name + " rssi: " + rssi + " : " + result.getScanRecord().getManufacturerSpecificData().keyAt(0) + "\n" + payload + "\n");
+            // auto scroll for text view
+            final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
+            // if there is no need to scroll, scrollAmount will be <=0
+            if (scrollAmount > 0)
+                peripheralTextView.scrollTo(0, scrollAmount);
+
+            // 将扫描到的蓝牙信息publish到云巴
+            // 同一个设备连续扫描到会间隔5秒（PUBLISH_YUNBA_INTERVAL）再重复发送
+            if (bleCache.get(payload) != null) {
+                if ( (new Date().getTime() - bleCache.get(payload).getTimestamp().getTime()) > PUBLISH_YUNBA_INTERVAL) {
+                    bleCache.get(payload).setTimestamp(new Date());
+                    publishToYunba(payload);
+                } else {
+                    //do nothing
+                    Log.i(TAG, "payload already published:"+payload);
+                }
+            } else {
+                bleCache.put(payload,new BleInfo(name,rssi,payload,new Date()));
+                publishToYunba(payload);
             }
-        };
+        }
+    };
 
-    public String toHexString(byte[] bytes){
+    private String toHexString(byte[] bytes) {
         StringBuilder hexString = new StringBuilder();
 
         for (int i = 0; i < bytes.length; i++) {
@@ -168,5 +199,30 @@ public class MainActivity extends AppCompatActivity implements android.view.View
         return hexString.toString();
     }
 
+    // 发送扫描到的蓝牙设备信息到云巴
+    private void publishToYunba(final String payload) {
+        String alias = CacheUtil.getInstance().getYunbaAlias();
+        if(TextUtils.isEmpty(alias)) {
+            alias = ConfigUtil.getInstance().getYunAlias();
+        }
+        Log.i(TAG,"ready to publish :" + alias + ":"+payload);
+        YunBaManager.publish2ToAlias(this, alias, payload, null,
+                new IMqttActionListener() {
+                    @Override
+                    public void onSuccess(IMqttToken asyncActionToken) {
+                        Log.i(TAG, "publish2 to alias succeed : " + payload);
+                    }
+
+                    @Override
+                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                        if (exception instanceof MqttException) {
+                            MqttException ex = (MqttException)exception;
+                            String msg =  "publish2ToAlias failed with error code : " + ex.getReasonCode();
+                            Log.e(TAG, msg);
+                        }
+                    }
+                }
+        );
+    }
 
 }

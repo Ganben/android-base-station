@@ -53,9 +53,9 @@ public class RemoteReceiver extends BroadcastReceiver {
     //send msg to MainActivity
     private void processCustomMessage(Context context, Intent intent) {
 
-        intent.setAction(MainActivity.MESSAGE_RECEIVED_ACTION);
-        intent.addCategory(context.getPackageName());
-        context.sendBroadcast(intent);
+//        intent.setAction(MainActivity.MESSAGE_RECEIVED_ACTION);
+//        intent.addCategory(context.getPackageName());
+//        context.sendBroadcast(intent);
 
     }
 

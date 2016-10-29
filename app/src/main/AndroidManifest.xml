@@ -15,17 +15,21 @@
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <uses-feature android:name="android.hardware.bluetooth_le"  android:required="true" />
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         >
-        <meta-data android:name="YUNBA_APPKEY" android:value="58117375374bd76b1b5b690a" />
+
         <activity android:name=".MainActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,6 +37,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 云巴配置 -->
+        <meta-data android:name="YUNBA_APPKEY" android:value="58117375374bd76b1b5b690a" />
         <service android:name="io.yunba.android.core.YunBaService"> </service>
         <receiver android:name="io.yunba.android.core.YunBaReceiver">
             <intent-filter>
