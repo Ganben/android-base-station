@@ -11,18 +11,27 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+
 import java.io.ByteArrayInputStream;
 
-public class MainActivity extends AppCompatActivity {
+import io.yunba.android.manager.YunBaManager;
+
+import static android.content.ContentValues.TAG;
+
+public class MainActivity extends AppCompatActivity implements android.view.View.OnClickListener {
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
@@ -58,6 +67,23 @@ public class MainActivity extends AppCompatActivity {
         });
         stopScanningButton.setVisibility(View.INVISIBLE);
 
+        YunBaManager.start(getApplicationContext());
+        YunBaManager.subscribe(getApplicationContext(), new String[]{"t1"}, new IMqttActionListener() {
+
+            @Override
+            public void onSuccess(IMqttToken arg0) {
+                Log.d("main", "Subscribe topic succeed");
+
+            }
+
+            @Override
+            public void onFailure(IMqttToken arg0, Throwable arg1) {
+                Log.d("main", "Subscribe topic failed" );
+            }
+        });
+
+        registerMessageReceiver();
+
     }
 
     public void init(){
@@ -69,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent,REQUEST_ENABLE_BT);
         }
+
 
         // Make sure we have access coarse location enabled, if not, prompt the user to enable it
 //        if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
