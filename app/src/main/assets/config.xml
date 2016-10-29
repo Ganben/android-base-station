@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+
+    <!--api host-->
+    <api-host>120.25.80.143:8082</api-host>
+    <!--cdn图片(资源服务)-->
+    <cdn-host>cdn.zkjinshi.com</cdn-host>
+    <!--pcm图片(资源服务)-->
+    <pcd-host>pcd.zkjinshi.com</pcd-host>
+    <!-- 云巴默认alias 及 topic -->
+    <yunba-alias>alias</yunba-alias>
+    <yunba-topic>topic</yunba-topic>
+
+</config>
