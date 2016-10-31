@@ -13,6 +13,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PUBLISH_YUNBA_INTERVAL = 5000;          //云巴publish间隔，单位毫秒
+    private static final int PUBLISH_YUNBA_INTERVAL_SOS = 1000;      //（紧急呼救）云巴publish间隔，单位毫秒
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
@@ -68,6 +71,24 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         checkConfig();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, YunbaSettingActivity.class);
+            startActivity(intent);
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void initView() {
@@ -100,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
 //            builder.show();
 //        }
 
-        YunBaManager.start(this);
+
         /*YunBaManager.subscribe(this, new String[]{"t1"}, new IMqttActionListener() {
 
             @Override
@@ -120,7 +141,9 @@ public class MainActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(CacheUtil.getInstance().getYunbaAlias())
             || TextUtils.isEmpty(CacheUtil.getInstance().getYunbaTopic())) {
             //TODO: need to config alias here
-            Log.e("Alias", "Alias or Topic is not configed");
+            Log.e("Alias", "Alias or Topic is not configured");
+            Intent intent = new Intent(this, YunbaSettingActivity.class);
+            startActivity(intent);
         }
     }
 
@@ -159,9 +182,14 @@ public class MainActivity extends AppCompatActivity {
         public void onScanResult(int callbackType, ScanResult result) {
             String payload = toHexString(result.getScanRecord().getManufacturerSpecificData().valueAt(0));
             String name = result.getDevice().getName();
+            int manufacturer = result.getScanRecord().getManufacturerSpecificData().keyAt(0);
             int rssi = result.getRssi();
 
-            peripheralTextView.append("Name: " + name + " rssi: " + rssi + " : " + result.getScanRecord().getManufacturerSpecificData().keyAt(0) + "\n" + payload + "\n");
+            if (manufacturer != Constants.MANUFACTURER_DATA) {
+                return ;
+            }
+
+            peripheralTextView.append("Name: " + name + " rssi: " + rssi + " md: " + manufacturer + "\n" + payload + "\n");
             // auto scroll for text view
             final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
             // if there is no need to scroll, scrollAmount will be <=0
@@ -169,9 +197,10 @@ public class MainActivity extends AppCompatActivity {
                 peripheralTextView.scrollTo(0, scrollAmount);
 
             // 将扫描到的蓝牙信息publish到云巴
-            // 同一个设备连续扫描到会间隔5秒（PUBLISH_YUNBA_INTERVAL）再重复发送
+            // 同一个设备连续扫描到后publish到yunba会间隔5秒（PUBLISH_YUNBA_INTERVAL）再重复发送
+            // 如果是紧急呼救状态，间隔为1秒
             if (bleCache.get(payload) != null) {
-                if ( (new Date().getTime() - bleCache.get(payload).getTimestamp().getTime()) > PUBLISH_YUNBA_INTERVAL) {
+                if ( (new Date().getTime() - bleCache.get(payload).getTimestamp().getTime()) > (isSOS(payload) ? PUBLISH_YUNBA_INTERVAL_SOS : PUBLISH_YUNBA_INTERVAL) ) {
                     bleCache.get(payload).setTimestamp(new Date());
                     publishToYunba(payload);
                 } else {
@@ -197,6 +226,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return hexString.toString();
+    }
+
+    // 是否未紧急呼救
+    private boolean isSOS(String payload) {
+        return payload.startsWith(Constants.SOS_SIGNAL);
     }
 
     // 发送扫描到的蓝牙设备信息到云巴

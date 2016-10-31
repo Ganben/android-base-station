@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
 
+import io.yunba.android.manager.YunBaManager;
+
 /**
  * Created by yejun on 10/29/16.
  * Copyright (C) 2016 qinyejun
@@ -36,6 +38,8 @@ public class MyApplication  extends BaseApplication {
         saveConfig();
         //initLog();
         //initImageLoader();
+
+        YunBaManager.start(this);
     }
 
     public static Context getContext(){
