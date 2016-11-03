@@ -30,7 +30,9 @@
         android:theme="@style/AppTheme"
         >
 
-        <activity android:name=".MainActivity" >
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,7 +40,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".YunbaSettingActivity"></activity>
+        <activity android:name=".YunbaSettingActivity" android:screenOrientation="portrait" />
+
 
         <!-- 云巴配置 -->
         <meta-data android:name="YUNBA_APPKEY" android:value="5816f90f6cf991dc38fd2161" />

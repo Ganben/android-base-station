@@ -6,21 +6,7 @@
               android:padding="10dp">
 
     <TextView
-        android:text="消息接收通道别名"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:text=""
-        android:hint="请设置消息接收通道别名"
-        android:ems="10"
-        android:id="@+id/et_alias"/>
-
-    <TextView
-        android:text="消息接收频道"
+        android:text="AP ID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp" />
@@ -30,9 +16,23 @@
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
         android:text=""
+        android:hint="请设置AP的唯一ID"
+        android:ems="10"
+        android:id="@+id/et_apid"/>
+
+    <TextView
+        android:text="消息接收频道(Alias)"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text=""
         android:hint="请设置消息接收频道"
         android:ems="10"
-        android:id="@+id/et_topic"/>
+        android:id="@+id/et_alias"/>
 
     <Button
         android:text="保存"

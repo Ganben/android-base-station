@@ -23,8 +23,8 @@ public class YunbaSettingActivity extends AppCompatActivity {
 
     @BindView(R.id.et_alias)
     EditText mEtAlias;
-    @BindView(R.id.et_topic)
-    EditText mEtTopic;
+    @BindView(R.id.et_apid)
+    EditText mEtAPId;
     @BindView(R.id.btn_confirm)
     Button mBtnConfirm;
 
@@ -40,29 +40,29 @@ public class YunbaSettingActivity extends AppCompatActivity {
 
     private void initView() {
         String alias = CacheUtil.getInstance().getYunbaAlias();
-        String topic = CacheUtil.getInstance().getYunbaTopic();
+        String apid = CacheUtil.getInstance().getAPID();
 
         mEtAlias.setText(alias);
-        mEtTopic.setText(topic);
+        mEtAPId.setText(apid);
     }
 
     @OnClick(R.id.btn_confirm)
     public void onClick() {
         String alias = mEtAlias.getText().toString().trim();
-        String topic = mEtTopic.getText().toString().trim();
+        String apid = mEtAPId.getText().toString().trim();
 
         if (TextUtils.isEmpty(alias)) {
-            Toast.makeText(this,"别名不能为空", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"频道名称不能为空", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (TextUtils.isEmpty(topic)) {
-            Toast.makeText(this,"频道不能为空", Toast.LENGTH_SHORT).show();
+        if (TextUtils.isEmpty(apid)) {
+            Toast.makeText(this,"AP ID不能为空", Toast.LENGTH_SHORT).show();
             return;
         }
 
         CacheUtil.getInstance().setYunbaAlias(alias);
-        CacheUtil.getInstance().setYunbaTopic(topic);
+        CacheUtil.getInstance().setAPID(apid);
         finish();
     }
 }

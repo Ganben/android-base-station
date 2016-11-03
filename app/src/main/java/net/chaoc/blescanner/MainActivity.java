@@ -1,14 +1,17 @@
 package net.chaoc.blescanner;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
@@ -19,7 +22,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+
 import net.chaoc.blescanner.models.BleInfo;
+import net.chaoc.blescanner.models.YunbaPayload;
 import net.chaoc.blescanner.utils.CacheUtil;
 import net.chaoc.blescanner.utils.ConfigUtil;
 
@@ -48,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PUBLISH_YUNBA_INTERVAL = 5000;          //云巴publish间隔，单位毫秒
     private static final int PUBLISH_YUNBA_INTERVAL_SOS = 1000;      //（紧急呼救）云巴publish间隔，单位毫秒
+    private Gson mGson = new Gson();
 
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
@@ -62,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         initView();
-        init();
+        initBlutetooth();
         //registerMessageReceiver();
     }
 
@@ -96,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         stopScanningButton.setVisibility(View.INVISIBLE);
     }
 
-    private void init() {
+    private void initBlutetooth() {
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         btScanner = btAdapter.getBluetoothLeScanner();
@@ -139,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
     // 检查云巴 alias & topic是否已经配置
     private void checkConfig() {
         if (TextUtils.isEmpty(CacheUtil.getInstance().getYunbaAlias())
-            || TextUtils.isEmpty(CacheUtil.getInstance().getYunbaTopic())) {
+            || TextUtils.isEmpty(CacheUtil.getInstance().getAPID())) {
             //TODO: need to config alias here
             Log.e("Alias", "Alias or Topic is not configured");
             Intent intent = new Intent(this, YunbaSettingActivity.class);
@@ -147,18 +154,47 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showBlueToothMsg() {
+        new AlertDialog.Builder(this)
+                .setTitle("请打开蓝牙")
+                .setMessage("请在设置中打开蓝牙")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent =  new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
     @OnClick(R.id.StartScanButton)
     public void startScanning(View view) {
-        System.out.println("start scanning");
-        peripheralTextView.setText("");
-        startScanningButton.setVisibility(View.INVISIBLE);
-        stopScanningButton.setVisibility(View.VISIBLE);
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                btScanner.startScan(leScanCallback);
+        if (null != btAdapter && btAdapter.isEnabled()) {
+            if (null == btScanner) {
+                btScanner = btAdapter.getBluetoothLeScanner();
             }
-        });
+            if(null == btScanner) {
+                return;
+            }
+            System.out.println("start scanning");
+            peripheralTextView.setText("");
+            startScanningButton.setVisibility(View.INVISIBLE);
+            stopScanningButton.setVisibility(View.VISIBLE);
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    btScanner.startScan(leScanCallback);
+                }
+            });
+        } else {
+            showBlueToothMsg();
+        }
     }
 
     @OnClick(R.id.StopScanButton)
@@ -202,14 +238,14 @@ public class MainActivity extends AppCompatActivity {
             if (bleCache.get(payload) != null) {
                 if ( (new Date().getTime() - bleCache.get(payload).getTimestamp().getTime()) > (isSOS(payload) ? PUBLISH_YUNBA_INTERVAL_SOS : PUBLISH_YUNBA_INTERVAL) ) {
                     bleCache.get(payload).setTimestamp(new Date());
-                    publishToYunba(payload);
+                    publishToYunba(payload, rssi);
                 } else {
                     //do nothing
                     Log.i(TAG, "payload already published:"+payload);
                 }
             } else {
                 bleCache.put(payload,new BleInfo(name,rssi,payload,new Date()));
-                publishToYunba(payload);
+                publishToYunba(payload, rssi);
             }
         }
     };
@@ -234,17 +270,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 发送扫描到的蓝牙设备信息到云巴
-    private void publishToYunba(final String payload) {
+    private void publishToYunba(final String payload, int rssi) {
         String alias = CacheUtil.getInstance().getYunbaAlias();
-        if(TextUtils.isEmpty(alias)) {
-            alias = ConfigUtil.getInstance().getYunAlias();
+        String apid = CacheUtil.getInstance().getAPID();
+        if(TextUtils.isEmpty(alias) || TextUtils.isEmpty(apid)) {
+            return;
         }
-        Log.i(TAG,"ready to publish :" + alias + ":"+payload);
-        YunBaManager.publish2ToAlias(this, alias, payload, null,
+        YunbaPayload yunbaPayload = new YunbaPayload(apid, payload, rssi);
+
+        final String data = mGson.toJson(yunbaPayload);
+        Log.i(TAG,"ready to publish :" + alias + ":"+data);
+        YunBaManager.publish2ToAlias(this, alias, data, null,
                 new IMqttActionListener() {
                     @Override
                     public void onSuccess(IMqttToken asyncActionToken) {
-                        Log.i(TAG, "publish2 to alias succeed : " + payload);
+                        Log.i(TAG, "publish2 to alias succeed : " + data);
                     }
 
                     @Override
