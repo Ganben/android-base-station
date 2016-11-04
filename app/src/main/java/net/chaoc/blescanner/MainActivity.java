@@ -225,6 +225,10 @@ public class MainActivity extends AppCompatActivity {
                 return ;
             }
 
+            if (peripheralTextView.getText().toString().length() > 1024) {
+                peripheralTextView.setText("");
+                peripheralTextView.scrollTo(0,0);
+            }
             peripheralTextView.append("Name: " + name + " rssi: " + rssi + " md: " + manufacturer + "\n" + payload + "\n");
             // auto scroll for text view
             final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();

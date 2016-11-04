@@ -112,21 +112,6 @@ public class ConfigUtil {
         return "http://" + getConfigValue(Constants.PCD_HOST)+ "/";
     }
 
-    /**
-     * 获取云巴默认publish别名
-     * @return
-     */
-    public String getYunAlias() {
-        return getConfigValue(Constants.YUNBA_ALIAS);
-    }
-
-    /**
-     * 获取云巴默认publish频道
-     * @return
-     */
-    public String getYunbaTopic() {
-        return getConfigValue(Constants.YUNBA_TOPIC);
-    }
 
     /**
      * 根据标签名取得配置文件中的对应的文本
