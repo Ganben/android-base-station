@@ -30,7 +30,9 @@
         android:theme="@style/AppTheme"
         >
 
-        <activity android:name=".MainActivity" >
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,13 +40,23 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".YunbaSettingActivity" android:screenOrientation="portrait" />
+
+
         <!-- 云巴配置 -->
-        <meta-data android:name="YUNBA_APPKEY" android:value="58117375374bd76b1b5b690a" />
+        <meta-data android:name="YUNBA_APPKEY" android:value="5816f90f6cf991dc38fd2161" />
         <service android:name="io.yunba.android.core.YunBaService"> </service>
         <receiver android:name="io.yunba.android.core.YunBaReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".receiver.YunBaMessageReceiver">
+            <intent-filter>
+                <action android:name="io.yunba.android.MESSAGE_RECEIVED_ACTION" />
+                <action android:name="io.yunba.android.PRESENCE_RECEIVED_ACTION" />
+                <category android:name="net.chaoc.blescanner" />
             </intent-filter>
         </receiver>
 

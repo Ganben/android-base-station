@@ -3,10 +3,15 @@ package net.chaoc.blescanner;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import net.chaoc.blescanner.utils.CacheUtil;
 import net.chaoc.blescanner.utils.ConfigUtil;
+
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.List;
+
+import io.yunba.android.manager.YunBaManager;
 
 /**
  * Created by yejun on 10/29/16.
@@ -36,6 +43,35 @@ public class MyApplication  extends BaseApplication {
         saveConfig();
         //initLog();
         //initImageLoader();
+
+        YunBaManager.start(this);
+        YunBaManager.subscribe(getApplicationContext(), new String[]{Constants.YUNBA_TOPIC}, new IMqttActionListener() {
+
+            @Override
+            public void onSuccess(IMqttToken arg0) {
+                Log.i(TAG, "Yunba: Subscribe topic succeed");
+            }
+
+            @Override
+            public void onFailure(IMqttToken arg0, Throwable arg1) {
+                Log.i(TAG, "Yunba: Subscribe topic failed");
+            }
+        });
+        String apid = CacheUtil.getInstance().getAPID();
+        if (!TextUtils.isEmpty(apid)) {
+            YunBaManager.setAlias(this, apid, new IMqttActionListener(){
+
+                @Override
+                public void onSuccess(IMqttToken iMqttToken) {
+                    Log.i("Yunba", "Yunba: set Alias succeed");
+                }
+
+                @Override
+                public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
+                    Log.i("Yunba", "Yunba: set Alias failed");
+                }
+            });
+        }
     }
 
     public static Context getContext(){

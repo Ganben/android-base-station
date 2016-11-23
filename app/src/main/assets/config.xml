@@ -7,8 +7,5 @@
     <cdn-host>cdn.zkjinshi.com</cdn-host>
     <!--pcm图片(资源服务)-->
     <pcd-host>pcd.zkjinshi.com</pcd-host>
-    <!-- 云巴默认alias 及 topic -->
-    <yunba-alias>alias</yunba-alias>
-    <yunba-topic>topic</yunba-topic>
 
 </config>

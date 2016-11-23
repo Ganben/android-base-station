@@ -1,4 +1,4 @@
-package net.chaoc.blescanner;
+package net.chaoc.blescanner.utils;
 
 import android.app.ActivityManager;
 import android.app.NotificationManager;
@@ -15,6 +15,8 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.telephony.TelephonyManager;
+
+import net.chaoc.blescanner.MainActivity;
 
 import java.util.List;
 import java.util.Random;

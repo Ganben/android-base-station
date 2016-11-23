@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">blescanner</string>
+    <string name="action_settings">设置</string>
 </resources>

@@ -119,31 +119,31 @@ public class CacheUtil {
     }
 
     /**
-     * 保存云巴 topic
+     * 保存 AP ID
      * @param topic
      */
-    public void setYunbaTopic(String topic) {
+    public void setAPID(String topic) {
         if (null == context) {
             return;
         }
         SharedPreferences sp = context.getSharedPreferences(
                 KEY_CACHE, Context.MODE_PRIVATE);
-        sp.edit().putString("topic", topic).commit();
+        sp.edit().putString("apid", topic).commit();
     }
 
 
 
     /**
-     * 获取云巴topic
+     * 获取AP ID
      * @return
      */
-    public String getYunbaTopic() {
+    public String getAPID() {
         if (null == context) {
             return null;
         }
         SharedPreferences sp = context.getSharedPreferences(
                 KEY_CACHE, Context.MODE_PRIVATE);
-        return sp.getString("topic","");
+        return sp.getString("apid","");
     }
 
 
