@@ -33,14 +33,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="io.yunba.android.core.YunBaService"> </service>
-        <receiver android:name="io.yunba.android.core.YunBaReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.USER_PRESENT" />
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
+        <!--<service android:name="io.yunba.android.core.YunBaService"> </service>-->
+        <!--<receiver android:name="io.yunba.android.core.YunBaReceiver">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.USER_PRESENT" />-->
+                <!--<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
 
+    <!-- Mqtt Service -->
+    <service android:name="org.eclipse.paho.android.service.MqttService">
+    </service>
     </application>
 
 </manifest>
