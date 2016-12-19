@@ -352,8 +352,9 @@ public class MainActivity extends AppCompatActivity implements android.view.View
         private ScanCallback leScanCallback = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
-                if (result.getScanRecord().getManufacturerSpecificData().keyAt(0) == 65280) {
-                    matchCount += 1;
+                //if (result.getScanRecord().getManufacturerSpecificData().keyAt(0) == 65280) {
+                if (false) {
+                matchCount += 1;
                     try {
 //                    sampleClient = new MqttClient(broker, clientId);
 //                    sampleClient.connect();
@@ -366,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements android.view.View
                         Log.d(this.getClass().getSimpleName(), "mqtt sent err");
                     }
 
-                    peripheralTextView.append("$" + matchCount + ":N:" + result.getDevice().getName() + " rssi: " + result.getRssi() + " : " + result.getScanRecord().getManufacturerSpecificData().keyAt(0) + "\n" + toHexString(result.getScanRecord().getManufacturerSpecificData().valueAt(0)) + "\n");
+                    peripheralTextView.append("$" + matchCount + ":N:" + result.getDevice().getName() + " rssi: " + result.getRssi() + " : " + result.getScanRecord().getManufacturerSpecificData().keyAt(0) + "\n" + toHexString(result.getScanRecord().getBytes()) + "\n");
 
                     // auto scroll for text view
                     final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
@@ -374,7 +375,23 @@ public class MainActivity extends AppCompatActivity implements android.view.View
                     if (scrollAmount > 0)
                         peripheralTextView.scrollTo(0, scrollAmount);
                 } else {
-                    otherCount += 1;
+                    if (result.getDevice().getName() != null ) {
+                        if (result.getDevice().getName().toString().startsWith("Brac")) {
+//                        if (true) {
+                        try {
+                            peripheralTextView.append("$:" + result.getDevice().getName() + " rssi: " + result.getRssi() + " : " + result.getScanRecord().getManufacturerSpecificData().keyAt(0) + "\n" + toHexString(result.getScanRecord().getManufacturerSpecificData().valueAt(0)) + "\n" + toHexString(result.getScanRecord().getBytes()) + "\n");
+                            otherCount += 1;
+                            Log.w(this.getClass().getSimpleName(), toHexString(result.getScanRecord().getBytes()));
+                        } catch (Exception e) {
+                            Log.e(this.getClass().getSimpleName(), "get manufacture data error");
+                        }
+                            // auto scroll for text view
+                            final int scrollAmount = peripheralTextView.getLayout().getLineTop(peripheralTextView.getLineCount()) - peripheralTextView.getHeight();
+                            // if there is no need to scroll, scrollAmount will be <=0
+                            if (scrollAmount > 0)
+                                peripheralTextView.scrollTo(0, scrollAmount);
+                    }
+                    }
                 }
             }
         };
